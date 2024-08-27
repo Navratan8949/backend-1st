@@ -14,7 +14,7 @@ connectdb()
       console.log(`server in running at port ${process.env.PORT}`);
     });
   })
-  .catch((err) => {
+  .catch((err) => { 
     console.log("mongodb connection failed", err);
   });
 

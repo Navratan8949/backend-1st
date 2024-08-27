@@ -4,7 +4,7 @@ import multer from "multer"; // `multer` module ko import karte hain, jo file up
 const storage = multer.diskStorage({
   // Destination folder define karte hain jahan files store hongi
   destination: function (req, file, cb) {
-    cb(null, "../../public/temp"); // Files ko `../../public/temp` folder me store karenge
+    cb(null, "./public/temp"); // Files ko `../../public/temp` folder me store karenge
   },
   // Filename define karte hain jo file ko save karte waqt use hoga
   filename: function (req, file, cb) {
