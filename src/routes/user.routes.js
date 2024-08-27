@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   changeCurrentPassword,
+  getAllUser,
   getCurrentUser,
   getUserchannelProfile,
   getWatchHistory,
@@ -16,6 +17,8 @@ import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJwt } from "../middlewares/auth.middleware.js";
 
 const router = Router();
+
+router.get("/allusers", getAllUser);
 
 // router.route("/register").post(registerUser);
 router.post(

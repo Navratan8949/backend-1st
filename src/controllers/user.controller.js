@@ -25,6 +25,18 @@ const generateAccessAndRefreshTokens = async (userId) => {
   }
 };
 
+const getAllUser = asynchandler(async (req, res) => {
+  const user = await User.find({});
+  // const user = await User.find({}).select("-password -refreshToken");
+  if (!user.length) {
+    throw new ApiError(404, "no users found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "all users fatched successfully", user));
+});
+
 const registerUser = asynchandler(async (req, res) => {
   //   return res.status(200).json({ message: "ok" });
 
@@ -185,8 +197,11 @@ const logoutUser = asynchandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      // $set: {
+      //   refreshToken: undefined,
+      // },
+      $unset: {
+        refreshToken: 1, // this remove the feild from document
       },
     },
     {
@@ -205,6 +220,54 @@ const logoutUser = asynchandler(async (req, res) => {
     .clearCookie("refreshtoken", options)
     .json(new ApiResponse(200, "user logged out", {}));
 });
+
+// const refreshTokenAccess = asynchandler(async (req, res) => {
+//   const incomingRefreshToken =
+//     req.cookies.refreshToken || req.body.refreshToken;
+
+//   if (!incomingRefreshToken) {
+//     throw new ApiError(401, "unauthorized request");
+//   }
+
+//   try {
+//     const decodedToken = jwt.verify(
+//       incomingRefreshToken,
+//       process.env.REFRESH_TOKEN_SECRET
+//     );
+
+//     const user = await User.findById(decodedToken?._id);
+
+//     if (!user) {
+//       throw new ApiError(401, "Invalid refresh token");
+//     }
+
+//     if (incomingRefreshToken !== user?.refreshToken) {
+//       throw new ApiError(401, "refresh token is expired or used");
+//     }
+
+//     const options = {
+//       httpOnly: true,
+//       secure: true,
+//     };
+
+//     const { accessToken, newRrefreshToken } =
+//       await generateAccessAndRefreshTokens(user._id);
+
+//     return res
+//       .status(200)
+//       .cookie("accesstoken", accessToken, options)
+//       .cookie("refreshtoken", newRrefreshToken, options)
+//       .json(
+//         new ApiResponse(
+//           200,
+//           { accessToken, refreshToken: newRrefreshToken },
+//           "access token refreshed"
+//         )
+//       );
+//   } catch (error) {
+//     throw new ApiError(401, error?.message || "invalid refresh token");
+//   }
+// });
 
 const refreshTokenAccess = asynchandler(async (req, res) => {
   const incomingRefreshToken =
@@ -235,17 +298,18 @@ const refreshTokenAccess = asynchandler(async (req, res) => {
       secure: true,
     };
 
-    const { accessToken, newRrefreshToken } =
-      await generateAccessAndRefreshTokens(user._id);
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+      user._id
+    );
 
     return res
       .status(200)
       .cookie("accesstoken", accessToken, options)
-      .cookie("refreshtoken", newRrefreshToken, options)
+      .cookie("refreshtoken", refreshToken, options)
       .json(
         new ApiResponse(
           200,
-          { accessToken, refreshToken: newRrefreshToken },
+          { accessToken, refreshToken: refreshToken },
           "access token refreshed"
         )
       );
@@ -253,7 +317,6 @@ const refreshTokenAccess = asynchandler(async (req, res) => {
     throw new ApiError(401, error?.message || "invalid refresh token");
   }
 });
-
 const changeCurrentPassword = asynchandler(async (req, res) => {
   const {
     oldPassword,
@@ -319,6 +382,8 @@ const updateUserAvatar = asynchandler(async (req, res) => {
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is missing");
   }
+
+  // me chahta hu ki avatar to update ho jayega or wo cloudinary per upload ho jayega but me chahta hu ki pahle wala avatar cloudinary se delete ho jaye
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
 
@@ -492,12 +557,14 @@ const getWatchHistory = asynchandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        "watch History fetched Successfullly " > user[0].watchHistory
+        "watch History fetched Successfullly ",
+        user[0].watchHistory
       )
     );
 });
 
 export {
+  getAllUser,
   registerUser,
   loginUser,
   logoutUser,
